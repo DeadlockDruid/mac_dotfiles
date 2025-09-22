@@ -104,6 +104,7 @@ alt-j = 'focus down'
 alt-k = 'focus up'
 alt-l = 'focus right'
 
+
 # See: https://nikitabobko.github.io/AeroSpace/commands#move
 alt-shift-h = 'move left'
 alt-shift-j = 'move down'
@@ -113,6 +114,16 @@ alt-shift-l = 'move right'
 # See: https://nikitabobko.github.io/AeroSpace/commands#resize
 alt-shift-minus = 'resize smart -50'
 alt-shift-equal = 'resize smart +50'
+
+alt-shift-up = 'resize height +50'
+alt-shift-down = 'resize height -50'
+
+alt-shift-right = 'resize width +50'
+alt-shift-left = 'resize width -50'
+
+# 👇 NEW HOTKEY: Toggle floating/tiling for the focused window and join to right
+alt-backslash = ['layout floating tiling', 'join-with right']
+alt-quote = ['layout floating tiling', 'join-with left']
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
 alt-1 = 'workspace 1'
