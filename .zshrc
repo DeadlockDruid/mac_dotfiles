@@ -1,212 +1,131 @@
-# Initialize Starship (minimal prompt setup)
-eval "$(starship init zsh)"
-
-### Zinit Plugin Manager Setup ###
-# Ensure Zinit is installed
+# --- Zinit bootstrap ---
 if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
-  echo "Installing Zinit plugin manager..."
-  command mkdir -p "$HOME/.local/share/zinit" && \
-  command chmod g-rwX "$HOME/.local/share/zinit" && \
-  command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" || {
-    echo "Zinit installation failed. Please check your network or permissions."
-    return 1
-  }
+  command mkdir -p "$HOME/.local/share/zinit" &&
+  command chmod g-rwX "$HOME/.local/share/zinit" &&
+  command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" || return 1
 fi
+source "$HOME/.local/share/zinit/zinit.git/zinit.zsh" || return 1
+autoload -Uz _zinit; (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# Source Zinit if available
-if [[ -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
-  source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-  autoload -Uz _zinit
-  (( ${+_comps} )) && _comps[zinit]=_zinit
-else
-  echo "Zinit script not found. Check the installation path."
-  return 1
-fi
+# --- Paths & toolchains (dedup via zsh arrays) ---
+typeset -U path PATH
+path=(
+  $HOME/.local/share/nvim/lazy-rocks/hererocks/bin
+  $HOME/.local/bin
+  $HOME/.deno/bin
+  $HOME/.pyenv/shims
+  $HOME/.rvm/bin
+  $HOME/.yarn/bin $HOME/.config/yarn/global/node_modules/.bin
+  $HOME/.lmstudio/bin
+  $HOME/go/bin
+  $HOME/.cargo/bin
+  /opt/homebrew/opt/openjdk/bin
+  /opt/homebrew/opt/openssl@3/bin
+  /opt/homebrew/opt/postgresql@15/bin
+  /opt/homebrew/opt/libpq/bin
+  /opt/homebrew/opt/llvm/bin
+  /opt/codeql
+  /Users/divyanshurathore/sessionmanager-bundle/bin
+  /opt/homebrew/bin
+  $PATH
+)
+export PATH=${(j/:/)path}
 
-# Load Zinit annexes (required for advanced features)
+# Compiler/linker flags (merged, unique)
+export PKG_CONFIG_PATH="/opt/homebrew/opt/libpq/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export LDFLAGS="-L/opt/homebrew/opt/llvm/lib -L/opt/homebrew/opt/libpq/lib${LDFLAGS:+ $LDFLAGS}"
+export CPPFLAGS="-I/opt/homebrew/opt/llvm/include -I/opt/homebrew/opt/libpq/include${CPPFLAGS:+ $CPPFLAGS}"
+
+# Optional libs
+export LIBRARY_PATH=${LIBRARY_PATH:+$LIBRARY_PATH:}/opt/homebrew/opt/zstd/lib
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}/opt/homebrew/opt/zstd/lib
+
+# --- Language managers ---
+export PYENV_ROOT="$HOME/.pyenv"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+export NVM_DIR="$HOME/.nvm"
+[[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
+
+# --- zinit plugins ---
 zinit light-mode for \
   zdharma-continuum/zinit-annex-as-monitor \
   zdharma-continuum/zinit-annex-bin-gem-node \
   zdharma-continuum/zinit-annex-patch-dl \
   zdharma-continuum/zinit-annex-rust
 
-# Load essential plugins
-zinit light zsh-users/zsh-syntax-highlighting  # Syntax highlighting for commands
-zinit light zsh-users/zsh-autosuggestions      # Command autosuggestions
+# Load essentials (autosuggestions BEFORE syntax-highlighting)
+zinit light zsh-users/zsh-autosuggestions
+zinit light zsh-users/zsh-syntax-highlighting
 
-### Environment Variables ###
-export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
-export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-export PATH="/opt/homebrew/Cellar/yvm/4.1.4/versions/v1.22.19/bin:$PATH"
-export PATH="$(pyenv root)/shims:$PATH"
-export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-export PIPENV_PYTHON="$PYENV_ROOT/shims/python"
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="/Users/divyanshurathore/sessionmanager-bundle/bin:$PATH"
-export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/opt/zstd/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/homebrew/opt/zstd/lib
+# --- FZF & fd setup ---
+[[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+FZF_EXCLUDES=(.git node_modules dist .DS_Store vendor/cache cache public/packs public/packs-test)
+_fd_excludes() { printf ' --exclude %q' "${FZF_EXCLUDES[@]}"; }
 
-
-### Pyenv Setup ###
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-### NVM Setup ###
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-### YVM Configuration ###
-export YVM_DIR="/opt/homebrew/opt/yvm"
-[ -r "$YVM_DIR/yvm.sh" ] && . "$YVM_DIR/yvm.sh"
-export PATH="$PATH:$YVM_DIR/versions/v1.22.19/bin"
-
-# Automatically switch Yarn versions
-yvm use
-
-# Automatically use Node.js version from `.nvmrc`
-autoload -U add-zsh-hook
-load-nvmrc() {
-  if [[ -f .nvmrc ]]; then
-    nvm use || nvm install
-  fi
-}
-add-zsh-hook chpwd load-nvmrc
-load-nvmrc
-
-### Auto Commands for Specific Projects ###
-auto_commands() {
-  # Prevent infinite loops with a guard variable
-  if [ "$AUTO_COMMANDS_RUNNING" = "true" ]; then
-    return
-  fi
-
-  AUTO_COMMANDS_RUNNING="true"
-
-  case "$PWD" in
-    "/Users/divyanshurathore/rails_work/strategize/strategize_frontend")
-      echo "Running commands for Strategize..."
-      nvm use 20 > /dev/null 2>&1
-      yvm use > /dev/null 2>&1
-      ;;
-    "/Users/divyanshurathore/rails_work/aspenclean-obe-rails")
-      echo "Running commands for Aspen Clean..."
-      nvm use 12 > /dev/null 2>&1
-      yvm use > /dev/null 2>&1
-      ;;
-  esac
-
-  AUTO_COMMANDS_RUNNING=""
-}
-chpwd_functions+=(auto_commands)
-if [ -n "$PS1" ]; then
-  auto_commands
-fi
-
-### FZF Setup ###
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# Exclusions for FZF Commands
-export FZF_EXCLUDE="'{.git,node_modules,dist,.DS_Store,vendor/cache,cache,public/packs,public/packs-test}'"
-
-# Default commands for FZF
-export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude $FZF_EXCLUDE"
+export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix$(_fd_excludes)"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_ALT_C_COMMAND="fd --type=d --hidden --strip-cwd-prefix --exclude $FZF_EXCLUDE"
+export FZF_ALT_C_COMMAND="fd --type d --hidden --strip-cwd-prefix$(_fd_excludes)"
 
-# Use fd for path completion
-_fzf_compgen_path() {
-  fd --hidden --exclude $FZF_EXCLUDE . "${1:-.}"
-}
-_fzf_compgen_dir() {
-  fd --type=d --exclude $FZF_EXCLUDE . "${1:-.}"
-}
+_fzf_compgen_path() { fd --hidden$(_fd_excludes) . "${1:-.}"; }
+_fzf_compgen_dir()  { fd --type d$(_fd_excludes) . "${1:-.}"; }
 
-# Custom aliases for FZF
-alias fzf-js="fd --type=f --extension js --hidden --exclude $FZF_EXCLUDE | fzf"
-alias fzf-py="fd --type=f --extension py --hidden --exclude $FZF_EXCLUDE | fzf"
-alias fzf-rb="fd --type=f --extension rb --hidden --exclude $FZF_EXCLUDE | fzf"
-
-# FZF Color Scheme (Rose Pine Moon)
-# export FZF_DEFAULT_OPTS="
-#   --color=fg:#908caa,bg:#232136,hl:#ea9a97
-#   --color=fg+:#e0def4,bg+:#393552,hl+:#ea9a97
-#   --color=border:#44415a,header:#3e8fb0,gutter:#232136
-#   --color=spinner:#f6c177,info:#9ccfd8
-#   --color=pointer:#c4a7e7,marker:#eb6f92,prompt:#908caa"
-
-# FZF Color Scheme (Catppuccin)
+# FZF look (Catppuccin)
 export FZF_DEFAULT_OPTS=" \
 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
 --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
 --color=selected-bg:#45475a \
 --multi"
 
-# FZF Git Integration
-source ~/fzf-git.sh/fzf-git.sh
+# fzf-git integration (guarded)
+[[ -f ~/fzf-git.sh/fzf-git.sh ]] && source ~/fzf-git.sh/fzf-git.sh
 
-# ---- Eza (better ls) -----
-alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions"
-show_file_or_dir_preview="if [ -d {} ]; then eza --tree --color=always {} | head -200; else bat -n --color=always --line-range :500 {}; fi"
-
+# Eza (better ls) and previews
+alias ls="eza --color=always --long --git --icons=always --no-time --no-user --no-permissions"
+show_file_or_dir_preview='if [ -d {} ]; then eza --tree --color=always {} | head -200; else bat -n --color=always --line-range :500 {}; fi'
 export FZF_CTRL_T_OPTS="--preview '$show_file_or_dir_preview'"
 export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
 
-# Advanced customization of fzf options via _fzf_comprun function
-# - The first argument to the function is the name of the command.
-# - You should make sure to pass the rest of the arguments to fzf.
+# Per-command fzf completion previews
 _fzf_comprun() {
   local command=$1
   shift
-
   case "$command" in
     cd)           fzf --preview 'eza --tree --color=always {} | head -200' "$@" ;;
-    export|unset) fzf --preview "eval 'echo ${}'"         "$@" ;;
-    ssh)          fzf --preview 'dig {}'                   "$@" ;;
-    *)            fzf --preview "$show_file_or_dir_preview" "$@" ;;
+    export|unset) fzf --preview "eval 'echo ${}'"                           "$@" ;;
+    ssh)          fzf --preview 'dig {}'                                    "$@" ;;
+    *)            fzf --preview "$show_file_or_dir_preview"                 "$@" ;;
   esac
 }
 
-# Theme for Bat
+# Bat theme
 export BAT_THEME="Catppuccin Mocha"
 
-# thefuck alias
-eval $(thefuck --alias)
+# thefuck (lighter alias)
+eval "$(thefuck --alias fuck)"
 
-# ---- Zoxide (better cd) ----
+# Zoxide (no cd alias)
 eval "$(zoxide init zsh)"
-alias cd="z"
 
-# Alt + Left Arrow: Move to the beginning of the line
-bindkey '^[[1;3D' beginning-of-line
-# Alt + Right Arrow: Move to the end of the line
-bindkey '^[[1;3C' end-of-line
+# --- Keybindings (fixed selection) ---
+bindkey '^[[1;3D' beginning-of-line   # Alt+Left -> BOL
+bindkey '^[[1;3C' end-of-line         # Alt+Right -> EOL
+zle_select_to_start() { zle set-mark-command; zle beginning-of-line; }
+zle_select_to_end()   { zle set-mark-command; zle end-of-line; }
+zle -N zle_select_to_start; bindkey '^[[1;4D' zle_select_to_start
+zle -N zle_select_to_end;   bindkey '^[[1;4C' zle_select_to_end
 
-# Alt + Shift + Left Arrow: Select from the cursor to the beginning of the line
-zle_select_to_start() {
-  zle beginning-of-line
-  zle set-mark-command
-}
-zle -N zle_select_to_start
-bindkey '^[[1;4D' zle_select_to_start
-
-# Alt + Shift + Right Arrow: Select from the cursor to the end of the line
-zle_select_to_end() {
-  zle end-of-line
-  zle set-mark-command
-}
-zle -N zle_select_to_end
-bindkey '^[[1;4C' zle_select_to_end
-
-# NVCHAD nvim alias
+# --- Aliases ---
 alias nvchad="NVIM_APPNAME=nvchad nvim"
 
-# Generated for envman. Do not edit.
-[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
-export PATH=$PATH:$HOME/go/bin
+# Envman (generated)
+[[ -s "$HOME/.config/envman/load.sh" ]] && source "$HOME/.config/envman/load.sh"
 
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
+# CodeQL, session manager already in PATH above
+
+# --- Secrets (not committed) ---
+[[ -f ~/.zsh_secrets ]] && source ~/.zsh_secrets
+
+# --- Starship (prompt) - keep last ---
+eval "$(starship init zsh)"

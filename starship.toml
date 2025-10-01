@@ -29,9 +29,10 @@ format = """$directory$character"""
 # palette = "rose-pine-moon"
 palette = "catppuccin_mocha"
 
-right_format = """$all"""
+right_format = "$hostname$git_branch$time$aws$cmd_duration$status"
 
-command_timeout = 1000
+command_timeout = 800
+scan_timeout = 30
 
 ######  Rose pine palette settings start here  ######
 #
@@ -173,7 +174,7 @@ command_timeout = 1000
 # Note the use of Catppuccin color 'peach'
 success_symbol = "[[󰄛](green) ❯](peach)"
 error_symbol = "[[󰄛](red) ❯](peach)"
-vimcmd_symbol = "[󰄛 ❮](subtext1)" # For use with zsh-vi-mode
+vicmd_symbol = "[󰄛 ❮](subtext1)" # For use with zsh-vi-mode
 
 [directory.substitutions]
 Documents = "󰈙"
@@ -181,12 +182,85 @@ Downloads = " "
 Music = " "
 Pictures = " "
 
-
 [git_branch]
 style = "bold mauve"
 
+[git_status]
+disabled = false
+style = "bold overlay1"
+format = '([$all_status$ahead_behind]($style) )'
+ahead = "⇡${count}"
+behind = "⇣${count}"
+conflicted = "✖${count}"
+deleted = "✘${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+modified = "•${count}"
+renamed = "»${count}"
+staged = "+${count}"
+stashed = "$"
+untracked = "?${count}"
+up_to_date = "✓"
+
+[git_metrics]
+disabled = true
+
+[git_commit]
+disabled = true
+
+[git_state]
+disabled = true
+
+[package]
+disabled = true
+
+[memory_usage]
+disabled = true
+
+[kubernetes]
+disabled = true
+
+[terraform]
+disabled = true
+
+[nix_shell]
+disabled = true
+
+[time]
+disabled = false
+format = "[$time ]($style)"
+use_12hr = true
+style = "bold overlay1"
+
+[hostname]
+ssh_only = true
+format = "[$hostname ]($style)"
+style = "bold overlay1"
+
+[cmd_duration]
+min_time = 700
+show_milliseconds = true
+format = "[$duration ]($style)"
+style = "bold overlay1"
+
+[status]
+disabled = false
+format = "[$symbol]($style) "
+symbol = "✘"
+style = "bold red"
+
+[nodejs]
+# Only show when a Node/Deno project is clearly detected
+detect_files = ["package.json", "pnpm-lock.yaml", "yarn.lock", "deno.json", "deno.jsonc"]
+
+[python]
+# Only show in real Python projects
+detect_files = ["pyproject.toml", "requirements.txt", ".python-version"]
+
 [directory]
 style = "bold lavender"
+truncation_length = 3
+truncation_symbol = "…/"
+truncate_to_repo = true
 
 [aws]
 format = '[$symbol(profile: "$profile" )(\(region: $region\) )]($style)'
