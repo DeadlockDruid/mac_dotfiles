@@ -206,7 +206,6 @@ alt-shift-semicolon = 'mode service'
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 [mode.service.binding]
 esc = ['reload-config', 'mode main']
-alt-shift-esc = 'exec-and-forget sh -lc "pkill -x AeroSpace; sleep 0.2; open -na AeroSpace"' # hard restart AeroSpace
 
 r = ['flatten-workspace-tree', 'mode main'] # reset layout
 f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
@@ -227,9 +226,6 @@ down = 'volume down'
 up = 'volume up'
 shift-down = ['volume set 0', 'mode main']
 
-[[on-window-detected]]
-if.app-id = 'net.kovidgoyal.kitty'
-run = 'move-node-to-workspace T'
 
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
@@ -248,6 +244,10 @@ if.app-id = 'com.google.Chrome'
 run = 'move-node-to-workspace C'
 
 [[on-window-detected]]
+if.app-id = 'ai.perplexity.comet'
+run = 'move-node-to-workspace C'
+
+[[on-window-detected]]
 if.app-id = 'md.obsidian'
 run = 'move-node-to-workspace O'
 
@@ -262,3 +262,12 @@ run = 'move-node-to-workspace M'
 [[on-window-detected]]
 if.app-id = 'com.openai.chat'
 run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-id = 'ai.elementlabs.lmstudio'
+run = 'move-node-to-workspace 2'
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.VSCode'
+run = 'move-node-to-workspace V'
+
