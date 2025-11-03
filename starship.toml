@@ -26,6 +26,7 @@ add_newline = false
 # A minimal left prompt
 format = """$directory$character"""
 
+
 # palette = "rose-pine-moon"
 palette = "catppuccin_mocha"
 
@@ -258,7 +259,7 @@ detect_files = ["pyproject.toml", "requirements.txt", ".python-version"]
 
 [directory]
 style = "bold lavender"
-truncation_length = 3
+truncation_length = 2
 truncation_symbol = "…/"
 truncate_to_repo = true
 
