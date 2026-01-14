@@ -7,29 +7,41 @@ fi
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh" || return 1
 autoload -Uz _zinit; (( ${+_comps} )) && _comps[zinit]=_zinit
 
+# --- mise (language/tool versions) ---
+# Must be loaded early so shims are available before you call node/ruby/python, etc.
+
 # --- Paths & toolchains (dedup via zsh arrays) ---
 typeset -U path PATH
 path=(
   $HOME/.local/share/nvim/lazy-rocks/hererocks/bin
   $HOME/.local/bin
   $HOME/.deno/bin
-  $HOME/.pyenv/shims
-  $HOME/.rvm/bin
-  $HOME/.yarn/bin $HOME/.config/yarn/global/node_modules/.bin
   $HOME/.lmstudio/bin
   $HOME/go/bin
   $HOME/.cargo/bin
+
   /opt/homebrew/opt/openjdk/bin
   /opt/homebrew/opt/openssl@3/bin
-  /opt/homebrew/opt/postgresql@15/bin
   /opt/homebrew/opt/libpq/bin
   /opt/homebrew/opt/llvm/bin
   /opt/codeql
   /Users/divyanshurathore/sessionmanager-bundle/bin
+
   /opt/homebrew/bin
-  $PATH
+  /opt/homebrew/sbin
+  /usr/local/bin
+
+  # ✅ never drop system paths
+  /usr/bin
+  /bin
+  /usr/sbin
+  /sbin
 )
 export PATH=${(j/:/)path}
+
+# --- mise (language/tool versions) ---
+# Keep after PATH rebuild so mise can manage PATH in this shell.
+eval "$(mise activate zsh)"
 
 # Compiler/linker flags (merged, unique)
 export PKG_CONFIG_PATH="/opt/homebrew/opt/libpq/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -40,13 +52,6 @@ export CPPFLAGS="-I/opt/homebrew/opt/llvm/include -I/opt/homebrew/opt/libpq/incl
 export LIBRARY_PATH=${LIBRARY_PATH:+$LIBRARY_PATH:}/opt/homebrew/opt/zstd/lib
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}/opt/homebrew/opt/zstd/lib
 
-# --- Language managers ---
-export PYENV_ROOT="$HOME/.pyenv"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-export NVM_DIR="$HOME/.nvm"
-[[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
 
 # --- zinit plugins ---
 zinit light-mode for \
@@ -118,11 +123,6 @@ zle -N zle_select_to_end;   bindkey '^[[1;4C' zle_select_to_end
 
 # --- Aliases ---
 alias nvchad="NVIM_APPNAME=nvchad nvim"
-
-# Envman (generated)
-[[ -s "$HOME/.config/envman/load.sh" ]] && source "$HOME/.config/envman/load.sh"
-
-# CodeQL, session manager already in PATH above
 
 # --- Secrets (not committed) ---
 [[ -f ~/.zsh_secrets ]] && source ~/.zsh_secrets
